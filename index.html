@@ -2,101 +2,135 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dinner Wheel - Aiken, SC</title>
+  <title>Dinner Spinner - Aiken, SC</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       text-align: center;
-      background: #fdfdfd;
-      padding-top: 50px;
+      padding-top: 30px;
+      background: #f7f7f7;
     }
-    #wheel {
-      margin: auto;
-      width: 300px;
-      height: 300px;
+    canvas {
+      border: 5px solid #333;
       border-radius: 50%;
-      border: 10px solid #444;
-      position: relative;
-      overflow: hidden;
-    }
-    #wheel div {
-      width: 50%;
-      height: 50%;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform-origin: 0% 0%;
-      background: #ffdd57;
-      border: 1px solid #ccc;
+      margin-top: 20px;
     }
     #spin {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 18px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
     }
     #pointer {
-      position: absolute;
-      top: 20px;
-      left: 50%;
       width: 0;
       height: 0;
-      margin-left: -10px;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-      border-bottom: 20px solid red;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 30px solid red;
+      position: absolute;
+      top: 130px;
+      left: 50%;
+      margin-left: -20px;
+      z-index: 10;
+    }
+    #container {
+      position: relative;
+      width: 400px;
+      margin: auto;
     }
   </style>
 </head>
 <body>
-
-  <h1>Where to Eat Tonight?</h1>
-  <div id="pointer"></div>
-  <div id="wheel"></div>
-  <button id="spin">Spin the Wheel!</button>
-  <h2 id="result"></h2>
+  <h1>What’s for Dinner in Aiken?</h1>
+  <div id="container">
+    <div id="pointer"></div>
+    <canvas id="wheel" width="400" height="400"></canvas>
+  </div>
+  <button id="spin">🎡 Spin the Wheel!</button>
+  <div id="result"></div>
 
   <script>
     const options = [
-      "New Moon Cafe",
-      "Duke’s Bar‑B‑Q",
-      "Aiken Fish House",
-      "Tailgate Tavern",
-      "Apizza di Napoli",
-      "What’s Cookin’ Downtown"
+      "Chick-fil-a",
+      "5-Guys",
+      "Taco Bell",
+      "Sonic",
+      "Popeyes",
+      "Mcdonalds"
+      "Zaxby's"
     ];
+    const wheelCanvas = document.getElementById("wheel");
+    const ctx = wheelCanvas.getContext("2d");
+    const numSegments = options.length;
+    const segmentAngle = (2 * Math.PI) / numSegments;
+    let currentAngle = 0;
+    let isSpinning = false;
 
-    const wheel = document.getElementById("wheel");
-    const result = document.getElementById("result");
+    function drawWheel() {
+      for (let i = 0; i < numSegments; i++) {
+        const startAngle = i * segmentAngle;
+        const endAngle = startAngle + segmentAngle;
 
-    // Create slices
-    const angle = 360 / options.length;
-    options.forEach((opt, i) => {
-      const slice = document.createElement("div");
-      slice.innerText = opt;
-      slice.style.transform = `rotate(${i * angle}deg) skewY(-${90 - angle}deg)`;
-      slice.style.background = i % 2 === 0 ? "#ffdd57" : "#f78da7";
-      slice.style.color = "#333";
-      slice.style.padding = "10px";
-      wheel.appendChild(slice);
-    });
+        ctx.beginPath();
+        ctx.moveTo(200, 200);
+        ctx.arc(200, 200, 190, startAngle, endAngle);
+        ctx.fillStyle = i % 2 === 0 ? "#ffcc00" : "#ff6666";
+        ctx.fill();
+        ctx.stroke();
 
-    let spinning = false;
+        ctx.save();
+        ctx.translate(200, 200);
+        ctx.rotate(startAngle + segmentAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#000";
+        ctx.font = "16px Arial";
+        ctx.fillText(options[i], 170, 10);
+        ctx.restore();
+      }
+    }
 
-    document.getElementById("spin").onclick = () => {
-      if (spinning) return;
-      spinning = true;
-      const rotation = 360 * 5 + Math.floor(Math.random() * 360);
-      wheel.style.transition = "transform 4s ease-out";
-      wheel.style.transform = `rotate(${rotation}deg)`;
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      const spinTime = 5000;
+      const spinDegrees = Math.floor(Math.random() * 360 + 1440); // 4+ full spins
 
-      setTimeout(() => {
-        const normalized = rotation % 360;
-        const selectedIndex = Math.floor((360 - normalized) / angle) % options.length;
-        result.innerText = `🍽️ Try: ${options[selectedIndex]}`;
-        spinning = false;
-      }, 4000);
-    };
+      const start = performance.now();
+      const animate = (time) => {
+        const elapsed = time - start;
+        const progress = Math.min(elapsed / spinTime, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const angle = (spinDegrees * easeOut) * Math.PI / 180;
+
+        ctx.clearRect(0, 0, 400, 400);
+        ctx.save();
+        ctx.translate(200, 200);
+        ctx.rotate(angle);
+        ctx.translate(-200, -200);
+        drawWheel();
+        ctx.restore();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          const finalDeg = (spinDegrees % 360);
+          const winningIndex = numSegments - Math.floor((finalDeg / 360) * numSegments) % numSegments;
+          const winner = options[winningIndex % numSegments];
+          document.getElementById("result").textContent = `🍽️ Tonight's pick: ${winner}`;
+          isSpinning = false;
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+
+    drawWheel();
+    document.getElementById("spin").addEventListener("click", spinWheel);
   </script>
-
 </body>
 </html>
