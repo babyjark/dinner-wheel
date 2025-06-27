@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dinner Wheel - Aiken, SC</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #fdfdfd;
+      padding-top: 50px;
+    }
+    #wheel {
+      margin: auto;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      border: 10px solid #444;
+      position: relative;
+      overflow: hidden;
+    }
+    #wheel div {
+      width: 50%;
+      height: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0% 0%;
+      background: #ffdd57;
+      border: 1px solid #ccc;
+    }
+    #spin {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+    }
+    #pointer {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      width: 0;
+      height: 0;
+      margin-left: -10px;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 20px solid red;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Where to Eat Tonight?</h1>
+  <div id="pointer"></div>
+  <div id="wheel"></div>
+  <button id="spin">Spin the Wheel!</button>
+  <h2 id="result"></h2>
+
+  <script>
+    const options = [
+      "New Moon Cafe",
+      "Duke’s Bar‑B‑Q",
+      "Aiken Fish House",
+      "Tailgate Tavern",
+      "Apizza di Napoli",
+      "What’s Cookin’ Downtown"
+    ];
+
+    const wheel = document.getElementById("wheel");
+    const result = document.getElementById("result");
+
+    // Create slices
+    const angle = 360 / options.length;
+    options.forEach((opt, i) => {
+      const slice = document.createElement("div");
+      slice.innerText = opt;
+      slice.style.transform = `rotate(${i * angle}deg) skewY(-${90 - angle}deg)`;
+      slice.style.background = i % 2 === 0 ? "#ffdd57" : "#f78da7";
+      slice.style.color = "#333";
+      slice.style.padding = "10px";
+      wheel.appendChild(slice);
+    });
+
+    let spinning = false;
+
+    document.getElementById("spin").onclick = () => {
+      if (spinning) return;
+      spinning = true;
+      const rotation = 360 * 5 + Math.floor(Math.random() * 360);
+      wheel.style.transition = "transform 4s ease-out";
+      wheel.style.transform = `rotate(${rotation}deg)`;
+
+      setTimeout(() => {
+        const normalized = rotation % 360;
+        const selectedIndex = Math.floor((360 - normalized) / angle) % options.length;
+        result.innerText = `🍽️ Try: ${options[selectedIndex]}`;
+        spinning = false;
+      }, 4000);
+    };
+  </script>
+
+</body>
+</html>
